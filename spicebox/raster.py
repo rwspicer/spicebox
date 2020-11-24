@@ -11,6 +11,12 @@ import math
 
 import matplotlib.pyplot as plt
 
+from collections import namedtuple
+OLD_STYLE_RASTER_METADATA = namedtuple('RASTER_METADATA', 
+    ['transform', 'projection', 
+        'nX', 'nY', 'deltaX', 'deltaY', 'originX', 'originY'
+    ]
+)
 
 def load_raster (filename):
     """Load a raster file and it's metadata
