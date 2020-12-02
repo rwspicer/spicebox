@@ -1,5 +1,10 @@
 # CHANGLOG
 
+## [0.2.0] - 2020-12-02
+### added
+- raster.get_zoom_geotransform to build transform for data returned by zoom_to
+function
+
 ## [0.1.1] - 2020-11-24
 ### added
 - OLD_STYLE_RASTER_METADATA for compatbility of reading raster metadata 

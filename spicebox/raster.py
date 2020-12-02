@@ -11,6 +11,8 @@ import math
 
 import matplotlib.pyplot as plt
 
+from . import transforms
+
 from collections import namedtuple
 OLD_STYLE_RASTER_METADATA = namedtuple('RASTER_METADATA', 
     ['transform', 'projection', 
@@ -77,7 +79,7 @@ def save_raster(filename, data, transform, projection,
 def zoom_to(data, pixel, radius=50):
     """zooms in on a pixel location 
     """
-    idxs = np.array(pixel)- radius, np.array(pixel)+radius
+    idxs = np.array(pixel) - radius, np.array(pixel)+radius
 
     if idxs[0][0] < 0:
         idxs[0][0] = 0
@@ -86,6 +88,40 @@ def zoom_to(data, pixel, radius=50):
         idxs[0][1] = 0
         
     return data[idxs[0][0]:idxs[1][0],idxs[0][1]:idxs[1][1]]
+
+def get_zoom_geotransform(md, pixel, radius=50):
+    """Creates the geotransform for raster created by zoom_to
+
+    parameters
+    ----------
+    md: dict
+        raster metadata
+    pixel: tuple
+        (row index, col index)
+    radius: int
+
+    returns
+    -------
+    tuple of new transform
+    
+    """
+
+    origin = np.array(pixel) - radius
+
+    # bounds checking
+    if origin[0] < 0:
+        origin[0] = 0
+
+    if origin[1] < 0:
+        origin[1] = 0
+    
+    n_oX, n_oY = transforms.to_geo((origin),md['transform'])
+    old_t = md['transform']
+    new_t = (n_oX, old_t[1], old_t[2], n_oY, old_t[4], old_t[5] )
+
+    return new_t
+    
+
 
 def mask_layer(layer, mask, mask_value = np.nan):
     """apply a mask to a layer 
