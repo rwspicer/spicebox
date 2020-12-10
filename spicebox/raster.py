@@ -86,6 +86,11 @@ def zoom_to(data, pixel, radius=50):
 
     if idxs[0][1] < 0:
         idxs[0][1] = 0
+
+    if radius == 0:
+        zoom = data[pixel[0]:pixel[0]+1,pixel[1]:pixel[1]+1]
+        # print(zoom)
+        return zoom 
         
     return data[idxs[0][0]:idxs[1][0],idxs[0][1]:idxs[1][1]]
 
