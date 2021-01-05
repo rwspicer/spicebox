@@ -1,5 +1,9 @@
 # CHANGLOG
 
+## [0.2.2] - 2020-01-05
+### updated
+- gdal imports to be "from osgeo import gdal"
+
 ## [0.2.1] - 2020-12-10
 ### updated
 - raster.zoom_to radius of 0 now can return the vaule at the pixel requested
