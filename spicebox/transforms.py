@@ -6,7 +6,7 @@ Functions for performing coordinate transforms
 
 """
 import numpy as np
-import gdal
+from osgeo import gdal
 from osgeo.osr import SpatialReference, CoordinateTransformation
 
 

@@ -3,7 +3,7 @@ raster
 ------
 Input Output operations for rasters
 """
-import gdal
+from osgeo import gdal
 import numpy as np
 
 ROW, COL = 0,1
