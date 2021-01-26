@@ -1,6 +1,14 @@
 # CHANGLOG
 
-## [0.2.2] - 2020-01-05
+## [0.3.0] - 2021-01-26
+### added
+- raster.zoom_box and raster.get_zoom_box_geotransform functions
+- vector.py 
+
+### changed
+- improved raster documentation
+
+## [0.2.2] - 2021-01-05
 ### updated
 - gdal imports to be "from osgeo import gdal"
 

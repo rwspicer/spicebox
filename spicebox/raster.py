@@ -76,23 +76,81 @@ def save_raster(filename, data, transform, projection,
     outband.FlushCache()  
     raster.FlushCache()     
 
+def zoom_box(data, top_left, bottom_right):
+    """Zoom to a box defined by the top left and bottom right pixel coordinates
+
+    Parameters
+    ----------
+    data: np.array
+        2d raster data
+    top_left: tuple
+        (row, col) coordinates of top left pixel
+    bottom_right: tuple
+        (row, col) coordinates of bottom right pixel
+
+    Returns
+    -------
+    np.array
+    """
+    if top_left[0] < 0:
+        top_left[0]= 0
+
+    if top_left[1] < 0:
+        top_left[1] = 0
+
+    return data[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]]
+
+
 def zoom_to(data, pixel, radius=50):
-    """zooms in on a pixel location 
+    """zooms in on a pixel location
+
+    data: np.array
+        2d raster data
+    pixel: tuple
+        (row, col) coordinates of center point to zoom to
+    radius: Int, default 50
+        number of pixels around center to include in zoom
     """
     idxs = np.array(pixel) - radius, np.array(pixel)+radius
-
-    if idxs[0][0] < 0:
-        idxs[0][0] = 0
-
-    if idxs[0][1] < 0:
-        idxs[0][1] = 0
 
     if radius == 0:
         zoom = data[pixel[0]:pixel[0]+1,pixel[1]:pixel[1]+1]
         # print(zoom)
         return zoom 
         
-    return data[idxs[0][0]:idxs[1][0],idxs[0][1]:idxs[1][1]]
+    return zoom_box(data, idxs[0], idxs[1])
+
+def get_zoom_box_geotransform(md, top_left, bottom_right):
+    """get geotransform for zoom box
+
+    Parameters
+    ----------
+    md: dict
+        raster metadata
+    top_left: tuple
+        (row, col) coordinates of top left pixel
+    bottom_right: tuple
+        (row, col) coordinates of bottom right pixel
+
+    Returns
+    -------
+    tuple of new transform
+    """
+
+    origin = top_left[0],  bottom_right[0]
+
+    if origin[0] < 0:
+        origin[0] = 0
+
+    if origin[1] < 0:
+        origin[1] = 0
+
+    n_oX, n_oY = transforms.to_geo((origin),md['transform'])
+    old_t = md['transform']
+    new_t = (n_oX, old_t[1], old_t[2], n_oY, old_t[4], old_t[5] )
+
+    return new_t
+
 
 def get_zoom_geotransform(md, pixel, radius=50):
     """Creates the geotransform for raster created by zoom_to
