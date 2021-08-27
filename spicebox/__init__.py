@@ -1,3 +1,3 @@
-__codeurl__ = ""
+__codeurl__ = "https://github.com/rwspicer/spicebox"
 __email__ = "rwspicer@alaska.edu"
-__version__ = '0.3.0'
+__version__ = '0.4.0'
