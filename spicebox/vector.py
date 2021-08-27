@@ -1,20 +1,24 @@
 from osgeo import ogr
-
+import json
 from pandas import DataFrame
+import numpy as np
+import geojson
+
+from scipy.spatial import ConvexHull
 
 def load_vector(in_vec_file):
     """Open a vector file readable by ogr
 
     returns
     -------
-    gdal vector dataset
+    ogr vector data source
     """
     ds = ogr.Open(in_vec_file)
 
     return ds
 
 def get_features(vector_ds):
-    """Get features from vector dataset
+    """Get features from vector data source
 
     parameters
     ----------
@@ -73,6 +77,88 @@ def calc_centroids(vec_data, format_as_table=False):
     return centroids
 
 
+def merge_polygons (feature_list):
+    """Create one polygon from the convex hull of many polygons
+
+    Parametes
+    ---------
+    feature_list: list
+        list of ogr.Feature objects
+    
+    Returns
+    -------
+    ogr.Geometry
+        convex hull geometry
+    """
+    final_points_list = []
+    for feat in feature_list:
+        js = json.loads(feat.ExportToJson())
+        points_list = np.array(js['geometry']['coordinates'])
+        len_points = int(np.array(points_list.shape[:-1] ).prod())
+        n_coords = int(points_list.shape[-1])
+
+        points_list = points_list.reshape([len_points, n_coords])
+
+        final_points_list += list(points_list)
+
+    # final_points_list = np.flip(final_points_list, axis=1)
+
+    ch = ConvexHull(final_points_list)
+
+    chl = ch.points[ch.vertices].tolist()
+    chl.append(ch.points[ch.vertices][0].tolist())
+
+    geojs = geojson.Polygon(coordinates=[chl])
+    return ogr.CreateGeometryFromJson(json.dumps(geojs))
+ 
+
+def create_new_feature(feat_def, geom):
+    """Create a new feature
+
+    Parameters
+    ----------
+    feat_def: ogr.FeatureDefn
+        definition for feature from a layer 
+    geom: ogr.Geometry
+        geometry of feature
+
+    Returns
+    --------
+    ogr.Feature
+    """
+    feat = ogr.Feature(feat_def)
+    rv = feat.SetGeometry(geom)
+    
+    if rv != 0:
+        return None
+
+    # feat.SetField('name', name)
+    return feat
+
+def create_new_data_source(file_name, driver_name = 'ESRI Shapefile'):
+    """Creates a new vector DataSource. Use `save_vector` to save contents
+    to disk.
+
+    Parameters
+    ----------
+    file_name: str
+        a path to the new file to create
+    driver_name: Str
+        vector driver recognized by ogr.GetDriverByName
+    
+    Returns
+    -------
+    ogr.DataSource
+    """
+    driver = ogr.GetDriverByName(driver_name)
+    return driver.CreateDataSource(file_name)
 
 
+def save_vector(data_source):
+    """Save a modified vector data set to disk
 
+    Parameters
+    ----------
+    data_source: ogr.DataSource
+    """
+    data_source.FlushCache()
