@@ -20,16 +20,20 @@ OLD_STYLE_RASTER_METADATA = namedtuple('RASTER_METADATA',
     ]
 )
 
-def load_raster (filename):
+def load_raster (filename,  return_dataset = False):
     """Load a raster file and it's metadata
     
     Parameters
     ----------
     filename: str
         path to raster file to read
+    return_dataset: bool
+        if true return gdal.dataset
         
     Returns 
     -------
+    gdal.dataset
+        or 
     np.array
         2d raster data
     RASTER_METADATA
@@ -37,6 +41,8 @@ def load_raster (filename):
     """
     dataset = gdal.Open(filename, gdal.GA_ReadOnly)
     # (X, deltaX, rotation, Y, rotation, deltaY) = dataset.GetGeoTransform()
+    if return_dataset:
+        return dataset
 
     metadata = {
         'transform': dataset.GetGeoTransform(),
@@ -256,7 +262,52 @@ def convert_to_figure(raster_name, figure_name, title = "", cmap = 'viridis',
         plt.show()
     plt.close()
 
+def clip_polygon_raster (
+    in_raster, out_raster, vector, **warp_options
+    ):
+    """clips raster from shape using gdal warp
 
+    Parameters
+    ----------
+    in_raster: path or gdal.Dataset
+        input rater 
+    out_raster: path
+        file to save clipped data to
+    vector: path
+        path to vector file with shape to clip to
+    warp_options:
+        keyword options for gdal warp as formated for gdal.WarpOptions
+        see https://gdal.org/python/osgeo.gdal-module.html#WarpOptions
+        Default options use 'cropToCutline' = True, 'targetAlignedPixels' = True
+        and xRes and yRes from input raster.
+
+    Returns
+    -------
+    gdal.Dataset
+    """
+    if type(in_raster) is str:
+        in_raster = load_raster(in_raster, True)
+    gt = in_raster.GetGeoTransform()
+     
+    
+    options = {
+        'xRes': gt[1],'yRes': gt[5],
+        'targetAlignedPixels':True,
+        'cutlineDSName': vector,
+        'cropToCutline':True
+    }
+    options.update(warp_options)
+    
+    options = gdal.WarpOptions(**options)
+    
+    rv = gdal.Warp(out_raster, in_raster, options=options )
+    if not rv is None:
+        rv.FlushCache()
+    return rv
+
+
+# def orthorectify(out_raster, in_raster, ): 
+#     gdal.Warp(out_raster, in_raster, 
 
 ## examples
 # --- ## numerical 
