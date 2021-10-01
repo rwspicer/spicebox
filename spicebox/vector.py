@@ -162,3 +162,82 @@ def save_vector(data_source):
     data_source: ogr.DataSource
     """
     data_source.FlushCache()
+
+
+def get(dataset, layer, feature=None):
+    """
+    get the targer layer, or feature from a data set
+
+    Parameters
+    ----------
+    dataset: ogr.DataSource
+        vector dataset
+    layer: int
+        layer number
+    feature: int or None (optional)
+        feature number in layer 
+    """
+
+    layer = dataset.GetLayer(layer)
+    if feature is None or layer is None:
+        return layer
+    return layer.GetFeature(feature)
+    
+def geometry_to_array(geometry):
+    """
+    Get geometry type and list of points defining geometry form ogr.Geometry
+
+    Parameters
+    ----------
+    geometry: ogr.Geometry
+
+    """
+    gt = geometry.GetGeometryName()
+   
+    if gt == 'POLYGON':
+        bound = geometry.Boundary()
+        pts = bound.GetPoints()
+        array = np.array(pts)
+    elif  gt == 'MULTIPOLYGON':
+        geo_list = []
+        # bound = geometry.GetGeometryCount()
+        for i in range(geometry.GetGeometryCount()):
+            bound = geometry.GetGeometryRef(i).GetBoundary()
+            geo_list.append(np.array(bound.GetPoints()))
+        array = np.array(geo_list)
+        
+    else:
+        raise NotImplementedError('%s Not implented' % gt)
+    
+
+    return gt, array
+
+
+def plot_geometry(geometry, ax, gt=None):
+    """
+    plot geometry on plt axis object
+
+    Parameters
+    ----------
+    geometry: ogr.Geometry
+
+    Returns
+    -------
+    matplotlib compatible axis
+
+    """
+
+    if type(geometry) is ogr.Geometry:
+        gt, pts = geometry_to_array(geometry)
+    else:
+        pts = geometry
+
+    if gt == 'POLYGON':
+        ax.plot(pts.T[0], pts.T[1])
+
+    else:
+        raise NotImplementedError('plotting of %s is not implemented' % gt)
+
+    return ax 
+
+
