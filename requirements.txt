@@ -2,4 +2,4 @@ numpy
 matplotlib
 gdal 
 scipy
-pands
+pandas

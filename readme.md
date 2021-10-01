@@ -10,6 +10,7 @@ install requirements from requirements.txt
 
 
 install spicebox
-    python setup.py develop
+
+    `python setup.py develop`
 
 
