@@ -1,5 +1,14 @@
 # CHANGLOG
 
+## [0.6.0] - 2022-01-18
+### added
+- filetools.py
+- CLIlib.py
+- raster.py normal index functions
+
+### Changes
+- updates to raster clipping
+
 ## [0.5.0] - 2021-10-01
 ### added
 - raster.clip_polygon_raster to clip an area from a raster

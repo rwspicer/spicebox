@@ -3,7 +3,7 @@ raster
 ------
 Input Output operations for rasters
 """
-from osgeo import gdal
+from osgeo import gdal, gdal_array
 import numpy as np
 
 ROW, COL = 0,1
@@ -20,7 +20,15 @@ OLD_STYLE_RASTER_METADATA = namedtuple('RASTER_METADATA',
     ]
 )
 
-def load_raster (filename,  return_dataset = False):
+def numpy_type_lookup (item):
+    try:
+        dtype = item.dtype
+    except:
+        return gdal.GDT_Unknown
+
+    return gdal_array.GDALTypeCodeToNumericTypeCode(dtype.type)
+
+def load_raster (filename,  return_dataset = False, band = 1):
     """Load a raster file and it's metadata
     
     Parameters
@@ -51,7 +59,7 @@ def load_raster (filename,  return_dataset = False):
         'y_size': dataset.RasterYSize,
     }
 
-    data = dataset.GetRasterBand(1).ReadAsArray()
+    data = dataset.GetRasterBand(band).ReadAsArray()
     return data, metadata
 
 def save_raster(filename, data, transform, projection, 
@@ -82,7 +90,7 @@ def save_raster(filename, data, transform, projection,
     outband.FlushCache()  
     raster.FlushCache()     
 
-def zoom_box(data, top_left, bottom_right):
+def zoom_box(data, top_left, bottom_right, no_data_val=np.nan):
     """Zoom to a box defined by the top left and bottom right pixel coordinates
 
     Parameters
@@ -98,13 +106,23 @@ def zoom_box(data, top_left, bottom_right):
     -------
     np.array
     """
+    row_shift = 0
     if top_left[0] < 0:
+        row_shift = abs(top_left[0])
         top_left[0]= 0
-
+        
+    col_shift = 0
     if top_left[1] < 0:
+        col_shift = abs(top_left[1]) 
         top_left[1] = 0
 
-    return data[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]]
+    new = data[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]]
+    rows, cols = new.shape
+    if row_shift != 0 or col_shift !=0:
+        resized = np.zeros([rows+row_shift, cols+col_shift]) + no_data_val
+        resized[row_shift:, col_shift: ] = new[:,:]
+        new = resized
+    return new
 
 
 def zoom_to(data, pixel, radius=50):
@@ -145,11 +163,11 @@ def get_zoom_box_geotransform(md, top_left, bottom_right):
 
     origin = top_left[0],  bottom_right[0]
 
-    if origin[0] < 0:
-        origin[0] = 0
+    # if origin[0] < 0:
+    #     origin[0] = 0
 
-    if origin[1] < 0:
-        origin[1] = 0
+    # if origin[1] < 0:
+    #     origin[1] = 0
 
     n_oX, n_oY = transforms.to_geo((origin),md['transform'])
     old_t = md['transform']
@@ -213,7 +231,7 @@ def clip_raster (in_raster, out_raster, extent, datatpye=gdal.GDT_Float32):
 
     tiff = gdal.Translate(
         out_raster, in_raster, projWin = extent, 
-        format='GTiff', outputType=datatpye
+        format='GTiff', outputType=datatpye, noData=np.nan
     ) 
     # printtiff
     tiff.GetRasterBand(1).FlushCache()
@@ -304,6 +322,43 @@ def clip_polygon_raster (
     if not rv is None:
         rv.FlushCache()
     return rv
+
+def calc_norm_index(dataset, band_num, ir_band_num):
+    """
+    """
+    ir_band = dataset.GetRasterBand(ir_band_num).ReadAsArray()
+    band = dataset.GetRasterBand(band_num).ReadAsArray()
+
+    return (ir_band - band) /  (ir_band + band)
+
+
+def calc_julian_days_dg(tlc_time):
+    a = tlctime.year//100 
+    b = 2 - a + a // 4
+    UT = tlctime.hour + tlctime.minute/60 + (tlctime.second+tlctime.microsecond)/3600
+    jd = int(365.25*tlctime.year+4716) + \
+        int(30.6001*(tlctime.month+1)) + \
+        tlctime.day + UT/24+b-1524.5
+    return jd
+
+def calc_dist_sun_earth_au(jd):
+    d = jd - 2451545.0
+    g = 357.529 + 0.98560028 * d
+    d_es = 1.00014 - 0.01671 * np.cos(g) - 0.00014*np.cos(2*g)
+    return d_es
+
+def calc_absolute_radometric_calibration(
+        data, gain,offset, abs_cal_factor, effective_bandwidth, 
+    ):
+    """"""
+    return gain*data*(abs_cal_factor/effective_bandwidth) + offset
+
+def calc_toa_reflectance(radiance, dist_earth_sun, irradiance, theta):
+    """
+    """
+    ref = (radiance * (dist_earth_sun**2) * np.pi)/ (irradiance * np.cos(theta))
+    return ref
+
 
 
 # def orthorectify(out_raster, in_raster, ): 
