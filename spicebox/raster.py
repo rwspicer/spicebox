@@ -5,6 +5,7 @@ Input Output operations for rasters
 """
 from osgeo import gdal, gdal_array
 import numpy as np
+import subprocess
 
 ROW, COL = 0,1
 import math
@@ -20,7 +21,19 @@ OLD_STYLE_RASTER_METADATA = namedtuple('RASTER_METADATA',
     ]
 )
 
-def numpy_type_lookup (item):
+def gdal_type_lookup (item):
+    """Find the gdal type code of a Numpy object
+
+    Parameters
+    ----------
+    item: any
+        a numpy objet
+
+    Returns
+    -------
+    int
+        Gdal type code
+    """
     try:
         dtype = item.dtype
     except:
@@ -323,41 +336,52 @@ def clip_polygon_raster (
         rv.FlushCache()
     return rv
 
-def calc_norm_index(dataset, band_num, ir_band_num):
+def calc_norm_index(dataset, band_a_num, band_b_num):
+    """Calculate a normalized index such as NDVI acording to the 
+    equation: 
+
+        NDVI = (band_a - band b)/(band_a + band_b)
+
+    Parameters
+    ----------
+    dataset: GDAL.dataset
+        multispectral raster dataset
+    band_a_num: str
+    band_b_num: str
+        band numbers to use in calculating index
+
+    Returns
+    -------
+    Index values
     """
+    band_a = dataset.GetRasterBand(band_a_num).ReadAsArray()
+    band_b = dataset.GetRasterBand(band_b_num).ReadAsArray()
+
+    return (band_a - band_b) /  (band_a + band_b)
+
+
+def merge(to_merge, outfile, warp_options=[]): 
+    """Merge many rasters into a single raster using gdal warp
+
+    Parameters
+    ----------
+    to_merge: list
+        list of raster files
+    outfile: path
+        path to save merged data at
+    warp_options: gdal.warpOptions
+        options to pass to gdal warp
+
+    Returns
+    -------
+    raster.Dataset
     """
-    ir_band = dataset.GetRasterBand(ir_band_num).ReadAsArray()
-    band = dataset.GetRasterBand(band_num).ReadAsArray()
-
-    return (ir_band - band) /  (ir_band + band)
-
-
-def calc_julian_days_dg(tlc_time):
-    a = tlctime.year//100 
-    b = 2 - a + a // 4
-    UT = tlctime.hour + tlctime.minute/60 + (tlctime.second+tlctime.microsecond)/3600
-    jd = int(365.25*tlctime.year+4716) + \
-        int(30.6001*(tlctime.month+1)) + \
-        tlctime.day + UT/24+b-1524.5
-    return jd
-
-def calc_dist_sun_earth_au(jd):
-    d = jd - 2451545.0
-    g = 357.529 + 0.98560028 * d
-    d_es = 1.00014 - 0.01671 * np.cos(g) - 0.00014*np.cos(2*g)
-    return d_es
-
-def calc_absolute_radometric_calibration(
-        data, gain,offset, abs_cal_factor, effective_bandwidth, 
-    ):
-    """"""
-    return gain*data*(abs_cal_factor/effective_bandwidth) + offset
-
-def calc_toa_reflectance(radiance, dist_earth_sun, irradiance, theta):
-    """
-    """
-    ref = (radiance * (dist_earth_sun**2) * np.pi)/ (irradiance * np.cos(theta))
-    return ref
+    merged = gdal.Warp(
+        outfile, to_merge, format="GTiff",
+        options=warp_options
+    ) # if you want
+    merged.FlushCache() 
+    return merged 
 
 
 

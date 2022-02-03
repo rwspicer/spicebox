@@ -1,5 +1,14 @@
 # CHANGLOG
 
+## [0.7.0] - 2022-02-03
+### added
+- digitalglobe.py
+- raster.merge
+
+### changes
+- adds docs
+- changes setup for file tools
+
 ## [0.6.0] - 2022-01-18
 ### added
 - filetools.py
