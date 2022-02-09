@@ -233,7 +233,8 @@ def mask_layer(layer, mask, mask_value = np.nan):
 def clip_raster (in_raster, out_raster, extent, datatpye=gdal.GDT_Float32):
     """Clip a raster to extent
     
-    Parameters:
+    Parameters
+    ----------
     in_raster: path
         input raster file
     out_raster: path
@@ -296,7 +297,7 @@ def convert_to_figure(raster_name, figure_name, title = "", cmap = 'viridis',
 def clip_polygon_raster (
     in_raster, out_raster, vector, **warp_options
     ):
-    """clips raster from shape using gdal warp
+    """clips raster from shape(a vector file) using gdal warp
 
     Parameters
     ----------

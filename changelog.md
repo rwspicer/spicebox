@@ -1,11 +1,15 @@
 # CHANGLOG
 
+## [0.7.1] - 2022-02-09
+### changed
+- documentation cleanup
+
 ## [0.7.0] - 2022-02-03
 ### added
 - digitalglobe.py
 - raster.merge
 
-### changes
+### change
 - adds docs
 - changes setup for file tools
 
@@ -15,7 +19,7 @@
 - CLIlib.py
 - raster.py normal index functions
 
-### Changes
+### Changed
 - updates to raster clipping
 
 ## [0.5.0] - 2021-10-01
