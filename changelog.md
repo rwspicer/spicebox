@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.7.3] - 2022-02-17
+### Fixed
+- bugs caused by file tools refactoring
+
 ## [0.7.2] - 2022-02-14
 ### Added
 - filetools.tarball_all_subfiles and filetools.tarball_all functions 

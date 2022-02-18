@@ -105,14 +105,12 @@ def _tarball_helper_(filter_func, root,
 
     ext = '.tar.%s' % copression
 
-    
     root = os.path.join(root,filter)
     
     files = glob.glob(root)
     
     outfile_tag = ('%s-' % outfile_tag) if outfile_tag != '' else '' 
     for pth in files:
-        # print(pth)
         if not filter_func(pth):
             continue
 
@@ -148,7 +146,7 @@ def tarball_all_subfiles(
 
     """
     _tarball_helper_(
-        os.path.isfile, root, outdir , outfile_tag, copression, verbose 
+        os.path.isfile, root, filter, outdir , outfile_tag, copression, verbose 
     )
 
 
@@ -176,7 +174,7 @@ def tarball_all_subdirecttories(
 
     """
     _tarball_helper_(
-        os.path.isdir, root, outdir , outfile_tag, copression, verbose 
+        os.path.isdir, root, filter, outdir , outfile_tag, copression, verbose 
     )
 
 
@@ -205,7 +203,9 @@ def tarball_all(
     """
     if verbose:
         print("Adding directories to tarball...")
-    tarball_all_subdirecttories(root, outdir , outfile_tag, copression, verbose)
+    tarball_all_subdirecttories(
+        root, filter, outdir, outfile_tag, copression, verbose
+    )
     if verbose:
         print("Adding files to tarball...")
-    tarball_all_subfiles(root, outdir , outfile_tag, copression, verbose)
+    tarball_all_subfiles(root, filter, outdir, outfile_tag, copression, verbose)
