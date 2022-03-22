@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.8.0] - 2022-03-22
+### Chanaged
+- rewrite of contructior for CLIlib to allow better handling of default and 
+optional arguments. This change breaks utilities using older versions 
+
 ## [0.7.3] - 2022-02-17
 ### Fixed
 - bugs caused by file tools refactoring
