@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.8.1] - 2022-05-10
+### Chanaged
+- Copies the input config flags dict in CLI constructor so that the 
+original object is not affected.
+
 ## [0.8.0] - 2022-03-22
 ### Chanaged
 - rewrite of contructior for CLIlib to allow better handling of default and 
