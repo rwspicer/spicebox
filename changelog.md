@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.9.0] - 2022-11-17
+### added
+- rescale raster function
+
 ## [0.8.1] - 2022-05-10
 ### Chanaged
 - Copies the input config flags dict in CLI constructor so that the 
