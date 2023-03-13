@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [0.8.2] - 2023-03-13
+### added
+- raster.set_band_color_descriptions_function
+- raster.set_metadata_item functioon
+- raster.set_no_data function
+- raster.change_no_data function
+### changged
+- added mode argument to raaster.read_raster
+
 ## [0.8.1] - 2022-05-10
 ### Chanaged
 - Copies the input config flags dict in CLI constructor so that the 
