@@ -41,7 +41,7 @@ def gdal_type_lookup (item):
 
     return gdal_array.GDALTypeCodeToNumericTypeCode(dtype.type)
 
-def load_raster (filename,  return_dataset = False, band = 1):
+def load_raster (filename,  return_dataset = False, band = 1, mode=gdal.GA_ReadOnly):
     """Load a raster file and it's metadata
     
     Parameters
@@ -60,7 +60,7 @@ def load_raster (filename,  return_dataset = False, band = 1):
     RASTER_METADATA
         metadata on raster file read
     """
-    dataset = gdal.Open(filename, gdal.GA_ReadOnly)
+    dataset = gdal.Open(filename, mode)
     # (X, deltaX, rotation, Y, rotation, deltaY) = dataset.GetGeoTransform()
     if return_dataset:
         return dataset
@@ -102,6 +102,70 @@ def save_raster(filename, data, transform, projection,
     raster.SetProjection(projection) 
     outband.FlushCache()  
     raster.FlushCache()     
+
+def set_band_color_descriptions(ds, color_dict, verbose=False):
+    """Set band descriptions to color names. If band name is red, green, or 
+    blue color interpretation is also set 
+
+    Parameters
+    ----------
+    ds: gdal.dataset
+        raster dataset
+    color_dict: dict
+        dict of band numbers to color names. i.e 
+        {1: 'blue', 2:'green', 3:'red', 4:'nir 1' }
+    verbose: bool
+        if true prints updated band metadata values
+
+    Returns
+    -------
+    returns True if function is successful
+    """
+
+    ci_table = {
+        'red': gdal.GCI_RedBand,
+        'green': gdal.GCI_GreenBand,
+        'blue': gdal.GCI_BlueBand,
+        'panchromatic': gdal.GCI_GrayIndex,
+    }
+
+    for band in range(1, ds.RasterCount+1):
+        rb = ds.GetRasterBand(band)
+        
+        if color_dict[band] in ['red', 'green', 'blue']:
+            rb.SetColorInterpretation(ci_table[color_dict[band]])
+        else:
+            rb.SetColorInterpretation(0)
+
+        rb.SetDescription(color_dict[band])
+        if verbose:
+            print(rb.GetDescription(), rb.GetColorInterpretation())
+    return True
+
+def set_metadata_item(ds, key, value, verbose=False):
+    """sets a raster metadata item
+
+    Parameters
+    ----------
+    ds: gdal.dataset
+        raster dataset
+    key: str
+    value: str
+    verbose: bool
+        if true prints updated band metadata values
+
+    Returns
+    -------
+    returns True if function is successful
+    """
+    
+    ds.SetMetadataItem(key, value)
+    if verbose:
+        print(ds.GetMetadata())
+    
+    return True
+
+
 
 def zoom_box(data, top_left, bottom_right, no_data_val=np.nan):
     """Zoom to a box defined by the top left and bottom right pixel coordinates
@@ -337,11 +401,32 @@ def clip_polygon_raster (
         rv.FlushCache()
     return rv
 
-def calc_norm_index(dataset, band_a_num, band_b_num):
+def clamp_band(data, min, max ):
+    """clamp data in band between min an max
+
+    Parameters
+    ----------
+    data: np.array
+        band data
+    min: Number
+    max: Number
+        Min and max values to clam to
+
+    Returns
+    -------
+    np.array
+        band_data
+    """
+    data[data < min] = min
+    data[data > max] = max
+    return data
+
+
+def calc_norm_index(dataset, band_a_name, band_b_name):
     """Calculate a normalized index such as NDVI acording to the 
     equation: 
 
-        NDVI = (band_a - band b)/(band_a + band_b)
+        INDEX = (band_a - band b)/(band_a + band_b)
 
     Parameters
     ----------
@@ -355,10 +440,21 @@ def calc_norm_index(dataset, band_a_num, band_b_num):
     -------
     Index values
     """
-    band_a = dataset.GetRasterBand(band_a_num).ReadAsArray()
-    band_b = dataset.GetRasterBand(band_b_num).ReadAsArray()
+    ## adding clamp function here because reflectance should be [0,1]
+    band_a = clamp_band(dataset.GetRasterBand(band_a_name).ReadAsArray(), 0, 1)
+    band_b = clamp_band(dataset.GetRasterBand(band_b_name).ReadAsArray(), 0, 1)
 
-    return (band_a - band_b) /  (band_a + band_b)
+    return (band_a - band_b) /  (band_b + band_a)
+
+
+def reproject(in_img, out_img, new_projection, dest_nodata):
+
+    options = gdal.WarpOptions(
+        dstSRS=new_projection, 
+        dstNodata=dest_nodata, 
+        creationOptions=['COMPRESS=LZW',]
+    )
+    gdal.Warp(out_img, in_img, options=options)
 
 
 def merge(to_merge, outfile, warp_options=[]): 
@@ -381,8 +477,38 @@ def merge(to_merge, outfile, warp_options=[]):
         outfile, to_merge, format="GTiff",
         options=warp_options
     ) # if you want
+    
     merged.FlushCache() 
     return merged 
+
+def set_no_data(ds, no_data_val, no_data_mask, bands):
+    """sets 
+    """
+    if bands is None:
+        bands = range(1, ds.RasterCount+1)
+    for band in bands:
+        rb = ds.GetRasterBand(band)
+        data = rb.ReadAsArray()
+        data[no_data_mask] = no_data_val
+        ds.GetRasterBand(band).WriteArray(data)
+        ds.GetRasterBand(band).SetNoDataValue(no_data_val)
+
+    return True
+
+def change_no_data(ds, new_no_data, bands=None):
+    if bands is None:
+        bands = range(1, ds.RasterCount+1)
+    for band in bands:
+        rb = ds.GetRasterBand(band)
+        old_no_data = rb.getNoDataValue()
+        data = rb.ReadAsArray()
+        if np.isnan(old_no_data):
+            mask = np.isnan(data)
+        else:
+            mask = data == old_no_data
+        set_no_data(ds, new_no_data, mask, [band])
+
+    return True
 
 
 
