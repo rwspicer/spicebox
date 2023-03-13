@@ -1,13 +1,17 @@
 # CHANGELOG
 
-## [0.8.2] - 2023-03-13
+## [0.9.1] - 2023-03-13
 ### added
 - raster.set_band_color_descriptions_function
-- raster.set_metadata_item functioon
+- raster.set_metadata_item function
 - raster.set_no_data function
 - raster.change_no_data function
-### changged
-- added mode argument to raaster.read_raster
+### changed
+- added mode argument to raster.read_raster
+
+## [0.9.0] - 2022-11-17
+### added
+- rescale raster function
 
 ## [0.8.1] - 2022-05-10
 ### Chanaged

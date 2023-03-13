@@ -201,6 +201,29 @@ def zoom_box(data, top_left, bottom_right, no_data_val=np.nan):
         new = resized
     return new
 
+def rescale_raster(
+        in_raster, out_raster, resolution, datatype=gdal.GDT_Float32
+    ):
+    """Rescales a rasters pixels to resolution
+                                            
+    Parameters
+    ----------                                 
+    in_raster: path                           
+        input raster file
+    out_raster: path
+        output raster file
+    resolution: tuple
+        (x Resolution, y Resolution)
+    datatype: gdal.Type
+    """
+    tiff = gdal.Warp(
+        out_raster, in_raster, xRes=resolution[0], yRes=resolution[1], 
+        format='GTiff', outputType=datatype
+    )    
+    tiff.GetRasterBand(1).FlushCache()
+    tiff.FlushCache()
+    return True
+
 
 def zoom_to(data, pixel, radius=50):
     """zooms in on a pixel location
