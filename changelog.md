@@ -1,6 +1,10 @@
 # CHANGELOG
 
 
+## [0.10.1] - 2023-03-29
+### fixed
+- typo related bugs in raster metadata functions
+
 ## [0.10.0] - 2023-03-29
 ### added
 - raster.create_raster function as a more configurable version of save_raster
