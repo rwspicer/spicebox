@@ -504,7 +504,7 @@ def merge(to_merge, outfile, warp_options=[]):
     merged.FlushCache() 
     return merged 
 
-def set_no_data(ds, no_data_val, no_data_mask, bands):
+def set_no_data(ds, no_data_val, no_data_mask, bands=None):
     """sets 
     """
     if bands is None:
@@ -523,7 +523,7 @@ def change_no_data(ds, new_no_data, bands=None):
         bands = range(1, ds.RasterCount+1)
     for band in bands:
         rb = ds.GetRasterBand(band)
-        old_no_data = rb.getNoDataValue()
+        old_no_data = rb.GetNoDataValue()
         data = rb.ReadAsArray()
         if np.isnan(old_no_data):
             mask = np.isnan(data)
