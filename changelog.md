@@ -1,5 +1,10 @@
 # CHANGELOG
 
+
+## [0.10.0] - 2023-03-29
+### added
+- raster.create_raster function as a more configurable version of save_raster
+
 ## [0.9.1] - 2023-03-13
 ### added
 - raster.set_band_color_descriptions_function
