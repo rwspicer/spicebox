@@ -103,6 +103,73 @@ def save_raster(filename, data, transform, projection,
     outband.FlushCache()  
     raster.FlushCache()     
 
+def create_raster(filename, data, transform, projection, 
+        datatype = gdal.GDT_Float32,
+        no_data = None,
+        color_dict = None,
+        metadata = {},
+        verbose = False
+    ):
+    """Create a raster data set from an array and metadata
+
+    Parameters
+    ----------
+    filename: path
+        path to file to save
+    data: np.array like
+        2D array to save
+    transform: tuple
+        (origin X, X resolution, 0, origin Y, 0, Y resolution) 
+    projection: string
+        SRS projection in WTK format
+    datatype:
+        Gdal data type
+    no_data:
+        no data value
+    color_dicts: dict, default None
+        dict of colors as described by set_band_color_descriptions.
+        If left None color descriptions are not written
+    metadata: dict
+        dict of metadata key value pairs to write to raster metadata
+    verbose: bool
+        messages may be written to console if true
+
+    Returns
+    -------
+    gdal raster dateset
+    """
+    write_driver = gdal.GetDriverByName('GTiff') 
+
+    if len(data.shape) == 3
+        cols, rows, bands = data.shape[2], data.shape[1], data.shape[0]
+    else:
+        cols, rows, bands = data.shape[1], data.shape[0], 1
+
+    raster = write_driver.Create(
+        filename, cols, rows, bands, datatype
+    )
+
+    raster.SetGeoTransform(transform) 
+    raster.SetProjection(projection) 
+
+    for band in range(bands): 
+        outband = raster.GetRasterBand(band + 1) # +1 for gdal 1 base index  
+        outband.WriteArray(data['band']) 
+        if band == 0 and no_data:
+            outband.SetNoDataValue(no_data)
+        outband.FlushCache()  
+        del(outband)
+
+    for key in metadata:
+        set_metadata_item(raster, key, metadata['key'], verbose)
+
+    if color_dict: 
+        set_band_color_descriptions(raster, color_dict, verbose)
+    
+    
+    raster.FlushCache()   
+    return raster
+
 def set_band_color_descriptions(ds, color_dict, verbose=False):
     """Set band descriptions to color names. If band name is red, green, or 
     blue color interpretation is also set 
